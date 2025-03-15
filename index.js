@@ -25,7 +25,7 @@ async function run() {
 
   // Write your prompt here
   const prompt =
-    "Stwórz post o najpopularniejszych wydarzeniach sportowych dnia. Użyj dynamicznego stylu, emoji i czytelnego formatowania. Każdy mecz powinien zawierać:  - Nazwę ligi  - Drużyny grające przeciwko sobie  - Godzinę meczu w czasie polskim  Na końcu dodaj zdanie zachęcające do oglądania z linkiem: [Moletv.fun](https://moletv.fun). Użyj hashtagów: #Sport #Mecze #NaŻywo #Moletv.";
+    "Napisz tweet o najważniejszych meczach i wydarzeniach sportowych z dzisiejszego dnia. Sprawdź, które wydarzenia są realne, wybierz te o największym znaczeniu i ogranicz tekst do 280 znaków. Dodaj informację, aby wejść na stronę moletv.fun, żeby obejrzeć wszystko za darmo. Ogranicz tekst do 280 znaków.";
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
