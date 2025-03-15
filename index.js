@@ -25,7 +25,7 @@ async function run() {
 
   // Write your prompt here
   const prompt =
-    "generate a web development content, tips and tricks or something new or some rant or some advice as a tweet, it should not be vague and should be unique; under 280 characters and should be plain text, you can use emojis";
+    "Stwórz post o najpopularniejszych wydarzeniach sportowych dnia. Użyj dynamicznego stylu, emoji i czytelnego formatowania. Każdy mecz powinien zawierać:  - Nazwę ligi  - Drużyny grające przeciwko sobie  - Godzinę meczu w czasie polskim  Na końcu dodaj zdanie zachęcające do oglądania z linkiem: [Moletv.fun](https://moletv.fun). Użyj hashtagów: #Sport #Mecze #NaŻywo #Moletv.";
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
