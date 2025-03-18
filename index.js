@@ -10,54 +10,84 @@ const twitterClient = new TwitterApi({
 });
 
 async function getSportsEvents() {
-  const today = new Date().toISOString().split('T')[0];
-  const response = await axios.get(`https://api.duckduckgo.com/?q=wydarzenia+sportowe+${today}+piłka+nożna+koszykówka+tenis&format=json&no_redirect=1`);
-  
-  const events = [];
-  // Przetwarzanie wyników z DuckDuckGo
-  if (response.data.RelatedTopics) {
-    response.data.RelatedTopics.forEach(topic => {
-      if (topic.FirstURL && topic.Text) {
-        events.push({
-          title: topic.Text.replace(/<[^>]+>/g, ''), // Usuwanie HTML
-          url: topic.FirstURL
-        });
-      }
-    });
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const query = `wydarzenia sportowe ${today} piłka nożna koszykówka tenis`;
+    
+    const response = await axios.get(
+      `https://api.duckduckgo.com/?q=${
+        encodeURIComponent(query)
+      }&format=json&no_redirect=1&t=sportsbot&no_html=1`
+    );
+
+    const events = [];
+    if (response.data?.RelatedTopics) {
+      response.data.RelatedTopics.forEach(topic => {
+        if (topic.FirstURL && topic.Text) {
+          events.push({
+            title: topic.Text
+              .replace(/<[^>]+>/g, '') // Usuwa tagi HTML
+              .replace(/\s+/g, ' ')     // Usuwa wielokrotne spacje
+              .replace(/[^\x00-\x7F]/g, '') // Usuwa znaki specjalne
+              .trim(),
+            url: topic.FirstURL
+          });
+        }
+      });
+    }
+    return events.slice(0, 3);
+  } catch (error) {
+    console.error("Błąd pobierania danych:", error.message);
+    return [];
   }
-  return events.slice(0, 3); // Zwróć 3 najważniejsze wydarzenia
 }
 
 async function createTweet() {
-  const events = await getSportsEvents();
-  if (events.length === 0) return "Brak ważnych wydarzeń sportowych dziś.";
-  
-  let tweet = `⚽ Najważniejsze wydarzenia sportowe (${new Date().toLocaleDateString()}):\n`;
-  events.forEach(event => {
-    tweet += `• ${event.title}\n`;
-  });
-  tweet += "\nTransmisje: moletv.fun";
-  
-  // Skracanie do 280 znaków
-  return tweet.slice(0, 280);
-}
-
-async function run() {
   try {
-    const tweetText = await createTweet();
-    console.log(tweetText);
-    await sendTweet(tweetText);
+    const events = await getSportsEvents();
+    
+    if (events.length === 0) {
+      return "Brak ważnych wydarzeń sportowych dziś. 🏟️ Sprawdź później!";
+    }
+
+    let tweet = `🗓️ Najważniejsze wydarzenia (${new Date().toLocaleDateString('pl-PL')}):\n\n`;
+    events.forEach((event, index) => {
+      tweet += `${index + 1}. ${event.title}\n`;
+    });
+    
+    tweet += "\n▶️ Transmisje: moletv.fun";
+    
+    // Skracanie do 280 znaków
+    return tweet.slice(0, 280).trim();
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Błąd tworzenia tweetu:", error);
+    return null;
   }
 }
 
 async function sendTweet(tweetText) {
   try {
+    if (!tweetText || tweetText.length === 0) {
+      console.log("Brak treści do opublikowania");
+      return;
+    }
+    
     await twitterClient.v2.tweet(tweetText);
-    console.log("Tweet wysłany!");
+    console.log("Tweet opublikowany!");
   } catch (error) {
-    console.error("Błąd przy wysyłaniu:", error);
+    console.error("Błąd publikacji:", error.data);
+  }
+}
+
+async function run() {
+  try {
+    const tweetText = await createTweet();
+    if (tweetText) {
+      console.log("Wygenerowany tweet:\n", tweetText);
+      await sendTweet(tweetText);
+    }
+  } catch (error) {
+    console.error("Krytyczny błąd:", error);
   }
 }
 
