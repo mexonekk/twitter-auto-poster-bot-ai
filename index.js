@@ -1,9 +1,7 @@
+const GenAI = require("@google/generative-ai");
 const { TwitterApi } = require("twitter-api-v2");
-const axios = require("axios");
-const fs = require("fs");
 const SECRETS = require("./SECRETS");
 
-// Konfiguracja Twitter Client
 const twitterClient = new TwitterApi({
   appKey: SECRETS.APP_KEY,
   appSecret: SECRETS.APP_SECRET,
@@ -11,134 +9,68 @@ const twitterClient = new TwitterApi({
   accessSecret: SECRETS.ACCESS_SECRET,
 });
 
-// Konfiguracja
-const CONFIG = {
-  HISTORY_FILE: "./tweet_history.json",
-  TWEET_COOLDOWN: 15 * 60 * 1000, // 15 minut
-  NEWS_API_KEY: "dc4957d501d941a2b3f976390a6a9cc4",
-  SPORTS: ["football", "basketball", "tennis", "volleyball"]
+const generationConfig = {
+  maxOutputTokens: 400,
 };
+const genAI = new GenAI.GoogleGenerativeAI(SECRETS.GEMINI_API_KEY);
 
-async function getSportsEvents() {
+async function run() {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    generationConfig,
+  });
+
+  const prompt = `
+    Sprawdź najważniejsze, rzeczywiste mecze i wydarzenia sportowe z dzisiejszego dnia.
+    Jeśli istnieją POTWIERDZONE wydarzenia o znaczeniu międzynarodowym lub krajowym:
+    - Stwórz tweet w języku polskim
+    - Ogranicz do 280 znaków
+    - Dodaj informację o moletv.fun
+    - Podaj tylko faktyczne rezultaty i wydarzenia
+    
+    Jeśli NIE MA żadnych istotnych wydarzeń:
+    - Zwróć dokładnie: "BRAK_WYDARZEN"
+
+    Przed odpowiedzią upewnij się:
+    1. Sprawdź aktualne wyniki i harmonogramy
+    2. Zweryfikuj źródła informacji
+    3. Unikaj przewidywań lub niepotwierdzonych doniesień
+  `;
+
   try {
-    const today = new Date().toLocaleDateString('en-GB');
-    const query = `today ${CONFIG.SPORTS.join(' ')} events ${today}`;
-    
-    const ddgResponse = await axios.get(
-      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&kp=1&no_html=1&t=sportsbot`
-    );
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
 
-    const events = [];
+    console.log("Otrzymana odpowiedź:", text);
 
-    // Parsuj wyniki DuckDuckGo
-    if (ddgResponse.data?.Results) {
-      ddgResponse.data.Results.forEach(result => {
-        if (result.Text && result.FirstURL) {
-          events.push({
-            title: cleanText(result.Text),
-            url: result.FirstURL
-          });
-        }
-      });
+    if (text === "BRAK_WYDARZEN") {
+      console.log("Brak istotnych wydarzeń - tweet nie został wysłany");
+      return;
     }
 
-    if (events.length < 3) {
-      const newsResponse = await axios.get(
-        `https://newsapi.org/v2/everything?q=${CONFIG.SPORTS.join(' OR ')}&language=en&sortBy=publishedAt&apiKey=${CONFIG.NEWS_API_KEY}`
-      );
-      
-      newsResponse.data.articles.forEach(article => {
-        if (article.title.match(/vs|versus|match|game/i)) {
-          events.push({
-            title: `📰 ${cleanText(article.title)}`,
-            url: article.url
-          });
-        }
-      });
+    if (text.length > 280) {
+      console.error("Tweet przekracza limit znaków:", text.length);
+      return;
     }
 
-    return events.slice(0, 3);
+    if (/brak|nic|niewartościowych/i.test(text)) {
+      console.log("Wykryto potencjalny brak treści - tweet nie został wysłany");
+      return;
+    }
+
+    sendTweet(text);
   } catch (error) {
-    console.error("Błąd pobierania:", error.message);
-    return [];
-  }
-}
-
-function cleanText(text) {
-  return text
-    .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/( vs )/gi, ' 🆚 ')
-    .replace(/(\d+-\d+)/, '[$1]')
-    .replace(/\b(?:live|score|update)\b/gi, '')
-    .trim()
-    .slice(0, 80);
-}
-
-async function createTweet() {
-  try {
-    const events = await getSportsEvents();
-    
-    if (events.length === 0) {
-      return "🏐⚽🏀 Najciekawsze wydarzenia sportowe już wkrótce! Śledź nas na moletv.fun!";
-    }
-
-    let tweet = `🏆 Sportowe Hity (${new Date().toLocaleDateString('pl-PL')}):\n\n`;
-    events.forEach((event, index) => {
-      tweet += `${index + 1}. ${event.title}\n`;
-    });
-    
-    tweet += "\n🌍 Transmisje: moletv.fun";
-    
-    return tweet.slice(0, 280).trim();
-  } catch (error) {
-    console.error("Błąd tworzenia:", error);
-    return null;
-  }
-}
-
-function checkCooldown() {
-  try {
-    if (fs.existsSync(CONFIG.HISTORY_FILE)) {
-      const history = JSON.parse(fs.readFileSync(CONFIG.HISTORY_FILE));
-      const lastTweetTime = new Date(history.lastTweet).getTime();
-      return Date.now() - lastTweetTime < CONFIG.TWEET_COOLDOWN;
-    }
-    return false;
-  } catch (error) {
-    return true;
+    console.error("Błąd podczas generowania treści:", error);
   }
 }
 
 async function sendTweet(tweetText) {
   try {
-    if (checkCooldown()) {
-      console.log("Czekaj na następny tweet...");
-      return;
-    }
-
     await twitterClient.v2.tweet(tweetText);
-    
-    fs.writeFileSync(CONFIG.HISTORY_FILE, JSON.stringify({
-      lastTweet: new Date().toISOString(),
-      lastContent: tweetText
-    }));
-    
-    console.log("Tweet wysłany!");
+    console.log("Tweet wysłany pomyślnie:", tweetText);
   } catch (error) {
-    console.error("Błąd wysyłania:", error.data?.detail || error.message);
-  }
-}
-
-async function run() {
-  try {
-    const tweetText = await createTweet();
-    if (tweetText) {
-      console.log("Gotowy tweet:\n", tweetText);
-      await sendTweet(tweetText);
-    }
-  } catch (error) {
-    console.error("Krytyczny błąd:", error);
+    console.error("Błąd podczas wysyłania tweeta:", error);
   }
 }
 
