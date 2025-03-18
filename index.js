@@ -15,15 +15,15 @@ const generationConfig = {
 };
 const genAI = new GenAI.GoogleGenerativeAI(SECRETS.GEMINI_API_KEY);
 
-// API url for getting real-time sports data (replace with actual API endpoint)
-const sportsApiUrl = "https://api.football-data.org/v4/matches"; // Example, use real API endpoint
-const apiKey = SECRETS.FOOTBALL_API_KEY; // API key for sports data
+// API URL for getting real-time sports data (replace with actual API endpoint)
+const sportsApiUrl = "https://v3.football.api-sports.io/matches"; // API-Sports endpoint
+const apiKey = SECRETS.API_SPORTS_KEY; // API key for API-Sports
 
 async function getSportsData() {
   try {
     const response = await axios.get(sportsApiUrl, {
       headers: {
-        "X-Auth-Token": apiKey,
+        "x-apisports-key": apiKey, // Correct API-Sports header
       },
     });
     return response.data;
@@ -35,23 +35,24 @@ async function getSportsData() {
 
 async function generateTweet() {
   const sportsData = await getSportsData();
-  
-  if (!sportsData || !sportsData.matches || sportsData.matches.length === 0) {
+
+  if (!sportsData || !sportsData.response || sportsData.response.length === 0) {
     console.log("No upcoming matches or events found.");
     return;
   }
 
   // Take the first match to generate a tweet
-  const matchInfo = sportsData.matches[0];
-  const matchText = `${matchInfo.homeTeam.name} vs ${matchInfo.awayTeam.name} - ${matchInfo.utcDate}. Watch it now on moletv.fun!`;
+  const matchInfo = sportsData.response[0].teams;
+  const matchText = `${matchInfo.home.name} vs ${matchInfo.away.name} - ${sportsData.response[0].fixture.date}`;
 
-  // Generate tweet using the real match information
+  // Generate tweet using a more structured format
   const prompt = `
-    Napisz tweet o najważniejszych, rzeczywistych meczach i wydarzeniach sportowych z dzisiejszego dnia. 
-    Wybierz tylko te, które są potwierdzone przez wiarygodne źródła. 
-    Ogranicz tekst do 280 znaków. 
-    Podaj informację, że można je obejrzeć na moletv.fun. 
-    Przykład: ${matchText}
+    Napisz tweet o dzisiejszych meczach sportowych. 
+    Zachowaj następujący schemat:
+    - Drużyna domowa vs Drużyna gości - data meczu
+    - Podaj, że mecz można obejrzeć na moletv.fun
+    Ogranicz tekst do 280 znaków.
+    Przykład: ${matchText} - oglądaj na moletv.fun!
   `;
 
   // Generate content using GenAI
