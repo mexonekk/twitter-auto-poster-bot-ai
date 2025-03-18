@@ -43,16 +43,16 @@ async function generateTweet() {
 
   // Take the first match to generate a tweet
   const matchInfo = sportsData.response[0].teams;
-  const matchText = `${matchInfo.home.name} vs ${matchInfo.away.name} - ${sportsData.response[0].fixture.date}`;
+  const matchDate = sportsData.response[0].fixture.date;
+  const matchText = `${matchInfo.home.name} vs ${matchInfo.away.name} - ${matchDate}`;
 
-  // Generate tweet using a more structured format
+  // Now, include the match info in the prompt for AI to generate a tweet
   const prompt = `
-    Napisz tweet o dzisiejszych meczach sportowych. 
-    Zachowaj następujący schemat:
+    Napisz tweet o dzisiejszych meczach sportowych, zachowując następujący schemat:
     - Drużyna domowa vs Drużyna gości - data meczu
-    - Podaj, że mecz można obejrzeć na moletv.fun
-    Ogranicz tekst do 280 znaków.
+    - Podaj, że mecz można obejrzeć na moletv.fun.
     Przykład: ${matchText} - oglądaj na moletv.fun!
+    Ogranicz tekst do 280 znaków. Zadbaj, aby tekst był zwięzły i klarowny.
   `;
 
   // Generate content using GenAI
