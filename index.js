@@ -38,39 +38,45 @@ async function run() {
   `;
 
   try {
+    console.log("[AI] Rozpoczynam generowanie odpowiedzi...");
     const result = await model.generateContent(prompt);
     const response = await result.response;
+    
+    // Nowe: Pełna odpowiedź AI
+    console.log("\n[AI] Pełna odpowiedź API:", JSON.stringify(response, null, 2));
+    
     const text = response.text().trim();
-
-    console.log("Otrzymana odpowiedź:", text);
+    console.log("\n[AI] Wyekstrahowany tekst:", text);
 
     if (text === "BRAK_WYDARZEN") {
-      console.log("Brak istotnych wydarzeń - tweet nie został wysłany");
+      console.log("[SYSTEM] Brak wydarzeń - anulowano tweet");
       return;
     }
 
     if (text.length > 280) {
-      console.error("Tweet przekracza limit znaków:", text.length);
+      console.error("[BŁĄD] Przekroczono limit znaków:", text.length);
       return;
     }
 
     if (/brak|nic|niewartościowych/i.test(text)) {
-      console.log("Wykryto potencjalny brak treści - tweet nie został wysłany");
+      console.log("[SYSTEM] Wykryto potencjalnie pustą odpowiedź");
       return;
     }
 
+    console.log("[SYSTEM] Wysyłam tweet:", text);
     sendTweet(text);
+
   } catch (error) {
-    console.error("Błąd podczas generowania treści:", error);
+    console.error("[BŁĄD] Problem z AI:", error);
   }
 }
 
 async function sendTweet(tweetText) {
   try {
-    await twitterClient.v2.tweet(tweetText);
-    console.log("Tweet wysłany pomyślnie:", tweetText);
+    const tweet = await twitterClient.v2.tweet(tweetText);
+    console.log("[SUKCES] Tweet wysłany:", tweet.data.text);
   } catch (error) {
-    console.error("Błąd podczas wysyłania tweeta:", error);
+    console.error("[BŁĄD] Twitter API:", error);
   }
 }
 
