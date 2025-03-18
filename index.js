@@ -1,6 +1,5 @@
-const axios = require("axios");
-const GenAI = require("@google/generative-ai");
 const { TwitterApi } = require("twitter-api-v2");
+const axios = require("axios");
 const SECRETS = require("./SECRETS");
 
 const twitterClient = new TwitterApi({
@@ -10,74 +9,56 @@ const twitterClient = new TwitterApi({
   accessSecret: SECRETS.ACCESS_SECRET,
 });
 
-const generationConfig = {
-  maxOutputTokens: 400,
-};
-const genAI = new GenAI.GoogleGenerativeAI(SECRETS.GEMINI_API_KEY);
-
-// API URL for getting real-time sports data (replace with actual API endpoint)
-const sportsApiUrl = "https://v3.football.api-sports.io/matches"; // API-Sports endpoint
-const apiKey = SECRETS.API_SPORTS_KEY; // API key for API-Sports
-
-async function getSportsData() {
-  try {
-    const response = await axios.get(sportsApiUrl, {
-      headers: {
-        "x-apisports-key": apiKey, // Correct API-Sports header
-      },
+async function getSportsEvents() {
+  const today = new Date().toISOString().split('T')[0];
+  const response = await axios.get(`https://api.duckduckgo.com/?q=wydarzenia+sportowe+${today}+piłka+nożna+koszykówka+tenis&format=json&no_redirect=1`);
+  
+  const events = [];
+  // Przetwarzanie wyników z DuckDuckGo
+  if (response.data.RelatedTopics) {
+    response.data.RelatedTopics.forEach(topic => {
+      if (topic.FirstURL && topic.Text) {
+        events.push({
+          title: topic.Text.replace(/<[^>]+>/g, ''), // Usuwanie HTML
+          url: topic.FirstURL
+        });
+      }
     });
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching sports data:", error);
-    return null;
   }
+  return events.slice(0, 3); // Zwróć 3 najważniejsze wydarzenia
 }
 
-async function generateTweet() {
-  const sportsData = await getSportsData();
-
-  if (!sportsData || !sportsData.response || sportsData.response.length === 0) {
-    console.log("No upcoming matches or events found.");
-    return;
-  }
-
-  // Take the first match to generate a tweet
-  const matchInfo = sportsData.response[0].teams;
-  const matchDate = sportsData.response[0].fixture.date;
-  const matchText = `${matchInfo.home.name} vs ${matchInfo.away.name} - ${matchDate}`;
-
-  // Now, include the match info in the prompt for AI to generate a tweet
-  const prompt = `
-    Napisz tweet o dzisiejszych meczach sportowych, zachowując następujący schemat:
-    - Drużyna domowa vs Drużyna gości - data meczu
-    - Podaj, że mecz można obejrzeć na moletv.fun.
-    Przykład: ${matchText} - oglądaj na moletv.fun!
-    Ogranicz tekst do 280 znaków. Zadbaj, aby tekst był zwięzły i klarowny.
-  `;
-
-  // Generate content using GenAI
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    generationConfig,
+async function createTweet() {
+  const events = await getSportsEvents();
+  if (events.length === 0) return "Brak ważnych wydarzeń sportowych dziś.";
+  
+  let tweet = `⚽ Najważniejsze wydarzenia sportowe (${new Date().toLocaleDateString()}):\n`;
+  events.forEach(event => {
+    tweet += `• ${event.title}\n`;
   });
+  tweet += "\nTransmisje: moletv.fun";
+  
+  // Skracanie do 280 znaków
+  return tweet.slice(0, 280);
+}
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const tweetText = response.text();
-
-  console.log("Generated Tweet:", tweetText);
-
-  // Send the generated tweet
-  sendTweet(tweetText);
+async function run() {
+  try {
+    const tweetText = await createTweet();
+    console.log(tweetText);
+    await sendTweet(tweetText);
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }
 
 async function sendTweet(tweetText) {
   try {
     await twitterClient.v2.tweet(tweetText);
-    console.log("Tweet sent successfully!");
+    console.log("Tweet wysłany!");
   } catch (error) {
-    console.error("Error sending tweet:", error);
+    console.error("Błąd przy wysyłaniu:", error);
   }
 }
 
-generateTweet();
+run();
