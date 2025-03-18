@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google/generative-ai": "^0.3.1",
-    "twitter-api-v2": "^1.16.1"
+    "axios": "^0.27.2",
+    "google-generative-ai": "^1.0.0", // inne zależności
+    "twitter-api-v2": "^1.5.0"
   }
 }
