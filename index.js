@@ -25,7 +25,7 @@ async function run() {
 
   // Write your prompt here
   const prompt =
-    "Napisz tweet o najważniejszych meczach i wydarzeniach sportowych z dzisiejszego dnia. Sprawdź, które wydarzenia są realne, wybierz te o największym znaczeniu i ogranicz tekst do 280 znaków. Dodaj informację, aby wejść na stronę moletv.fun, żeby obejrzeć wszystko za darmo. Ogranicz tekst do 280 znaków.";
+  "Napisz tweet o najważniejszych, rzeczywistych meczach i wydarzeniach sportowych z dzisiejszego dnia. Wybierz tylko te wydarzenia, które są potwierdzone i o największym znaczeniu. Ogranicz tekst do 280 znaków i dodaj informację, że można je obejrzeć na moletv.fun. Sprawdź fakty przed wygenerowaniem tekstu, aby uniknąć błędów.";
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
