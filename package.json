@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.27.2",
-    "google-generative-ai": "^1.0.0", // inne zależności
+    "google-generative-ai": "^1.0.0", 
     "twitter-api-v2": "^1.5.0"
   }
 }
