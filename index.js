@@ -25,7 +25,7 @@ async function run() {
 
   // Write your prompt here
   const prompt =
-  "Napisz tweet o najważniejszych, rzeczywistych meczach i wydarzeniach sportowych z dzisiejszego dnia. Wybierz tylko te wydarzenia, które są potwierdzone i o największym znaczeniu. Ogranicz tekst do 280 znaków i dodaj informację, że można je obejrzeć na moletv.fun. Sprawdź fakty przed wygenerowaniem tekstu, aby uniknąć błędów.";
+  "Stwórz kreatywne, angażujące tweety (w języku polskim) zachęcające do odwiedzenia strony moletv.fun, gdzie można całkowicie za darmo oglądać mecze piłkarskie i inne wydarzenia sportowe. Pamiętaj o:Limit 280 znaków – treść musi być zwięzła i dynamiczna.Emoji i estetyka: Użyj symboli związanych z piłką nożną (⚽, 🔥), emotikon (🎉, 🏆), oraz ikon technologii (💻, 📱). Unikaj przesady.Keywory: Wpleć nazwy lig (Liga Mistrzów, Premier League, La Liga, Bundesliga, Ekstraklasa) oraz hasła: „za darmo”, „na żywo”, „bez opłat”, „streaming”.Różnorodność formatów:Pytania: „Czy wiesz, gdzie obejrzysz dziś mecz za darmo? 🧐”Fakty: „Liga Mistrzów GRATIS? Tylko na moletv.fun! ✅”Call-to-action: „Kliknij, zanim mecz się zacznie! ⏳”Emocje: „GOL! 🥳 I cały mecz oglądaj BEZ LIMITÓW na moletv.fun!”CTA i link: Zawsze dodaj „moletv.fun” oraz wezwania typu „Sprawdź teraz!”, „Nie przegap!”.Przykładowy tweet:⚽🏆 MECZE ZA DARMO!Premier League, Mundial, La Liga – wszystkie na moletv.fun!🚨 Nie płacisz złotówki, a oglądasz w jakości HD!👉 Klikaj, zanim ktoś zdąży Ci powiedzieć „ofsajd”!Uwaga: Unikaj słów „piratstwo” – skup się na legalności i dostępności. Tekst ma być przyjazny, ale profesjonalny.";
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
