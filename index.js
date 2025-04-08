@@ -25,7 +25,7 @@ async function run() {
 
   // Write your prompt here
   const prompt =
-    "generate a web development content, tips and tricks or something new or some rant or some advice as a tweet, it should not be vague and should be unique; under 280 characters and should be plain text, you can use emojis";
+    "Stwórz post o losowych przedmiotach dostępnych na temu, zawierający wskazówki, zalety, porady lub unikalne zastosowanie danego produktu. Możesz używać emoji. Pamiętaj, aby post nie przekroczył 280 znaków. Zakończ zawsze linkiem: Odbierz 400 zł w kuponach na temu: https://tanieproduktyzchin.taplink.ws/";
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
