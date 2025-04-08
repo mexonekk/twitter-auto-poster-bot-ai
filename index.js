@@ -25,7 +25,7 @@ async function run() {
 
   // Write your prompt here
   const prompt =
-    "Stwórz post o losowych przedmiotach dostępnych na temu, zawierający wskazówki, zalety, porady lub unikalne zastosowanie danego produktu. Możesz używać emoji. Pamiętaj, aby post nie przekroczył 280 znaków. Zakończ zawsze linkiem: Odbierz 400 zł w kuponach na temu: https://tanieproduktyzchin.taplink.ws/";
+    "Stwórz post o losowych przedmiotach dostępnych na temu, zawierający wskazówki, zalety, porady lub unikalne zastosowanie danego produktu. Możesz używać emoji. Pamiętaj, aby post nie przekroczył 280 znaków. Zakończ zawsze W bio mozesz dostac te i wiele innych produktow oraz 400zl w kuponach";
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
